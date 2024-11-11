@@ -1,55 +1,74 @@
-import { fetchImages } from './js/pixabay-api';
-import { renderImages } from './js/render-functions';
-import iziToast from 'izitoast';
-import './izitoast/dist/css/iziToast.min.css';
-import SimpleLightbox from 'simplelightbox';
-import './simplelightbox/dist/simple-lightbox.min.css';
+import { fetchData } from "./js/pixabay-api";
+import { formResults } from "./js/render-functions";
 
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.querySelector('.js-search');  
-    const loader = document.querySelector('.loader');  
-    const gallery = document.querySelector('.gallery');  
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
 
-    if (!form) {
-        console.error("Форма з класом .js-search не знайдена");
-        return;
+import SimpleLightbox from "simplelightbox";
+import "simplelightbox/dist/simple-lightbox.min.css";
+
+const searchForm = document.querySelector(".search-form");
+const inputText = document.querySelector(".search-form input");
+const loader = document.querySelector(".loader");
+let lightbox;
+
+searchForm.addEventListener("submit", handleForm);
+
+function handleForm(event) {
+    event.preventDefault();
+    console.log("Працює");
+
+    const inputValue = inputText.value.trim();
+    console.log(inputValue);
+
+    if (inputValue === "") {
+        return iziToast.info({
+            position: 'topRight',
+            title: 'Помилка',
+            message: 'Заповніть поле запиту',
+        });
     }
 
-    // Створюємо екземпляр SimpleLightbox у глобальній області
-    let lightbox = new SimpleLightbox('.gallery a');
+    showLoader();
 
-    form.addEventListener('submit', async (event) => {  
-        event.preventDefault();  
+    fetchData(inputValue)
+        .then(res => {
+            if (res && res.length > 0) {
 
-        const query = event.currentTarget.elements.searchQuery.value.trim();
-
-        if (!query) {  
-            iziToast.error({ title: 'Error', message: 'Please enter a search query' });  
-            return;  
-        }  
-
-        loader.style.display = 'block';  
-        gallery.innerHTML = '';   
-
-        try {  
-            const data = await fetchImages(query); // Отримуємо дані
-
-            if (!data || !Array.isArray(data.hits)) {
-                iziToast.error({ title: 'Error', message: 'Unexpected response format' });
-                return;
+                formResults(res);
+                if (lightbox) {
+                    lightbox.refresh();
+                } else {
+                    lightbox = new SimpleLightbox('.gallery-item a', {
+                        captionsData: 'alt',
+                        captionDelay: 250,
+                    });
+                }
             }
+        })
 
-            if (data.hits.length === 0) {  
-                iziToast.info({ message: 'Sorry, there are no images matching your search query. Please try again!' });  
-            } else {  
-                renderImages(data.hits); 
-                
-                lightbox.refresh();
-            }  
-        } catch (error) {  
-            iziToast.error({ title: 'Error', message: error.message });   
-        } finally {
-            loader.style.display = 'none';  
-        }  
-    });
-});
+        .catch(error => {
+            console.log(error);
+
+            iziToast.error({
+                position: 'topRight',
+                title: 'Помилка',
+                message: 'Сталася помилка при отриманні зображень. Спробуйте ще раз!',
+                backgroundColor: '#ef4040',
+
+            });
+        })
+
+        .finally(() => {
+            hideLoader();
+            searchForm.reset();
+        });
+}
+
+function showLoader() {
+    loader.style.display = "block";
+}
+
+function hideLoader() {
+    loader.style.display = "none";
+}

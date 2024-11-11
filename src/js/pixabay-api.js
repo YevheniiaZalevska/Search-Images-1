@@ -1,27 +1,51 @@
-const API_KEY = '47015635-abc1d6fc17d6df7da0f15a0aa';  
 
-export const fetchImages = async (query) => {  
-    const url = `https://pixabay.com/api/?key=${API_KEY}&q=${encodeURIComponent(query)}&image_type=photo&orientation=horizontal&safesearch=true`;
-    
-    try {  
-        const response = await fetch(url);  
-        if (!response.ok) {  
-            throw new Error('Network response was not ok');  
-        }  
-        const data = await response.json();  
-        return data; 
-    } catch (error) {  
-        throw error;  
-    }  
-};
+import iziToast from "izitoast";
+import "izitoast/dist/css/iziToast.min.css";
+const API_KEY = '47015635-abc1d6fc17d6df7da0f15a0aa'; 
+const API_URL = "https://pixabay.com/api/";
 
-const getImages = async (query) => {
-    try {
-        const imagesData = await fetchImages(query);
-        const imageHits = imagesData.hits; // Дістаємо масив зображень
-    } catch (error) {
-        console.error('Error fetching images:', error);
-    }
-};
+export function fetchData(inputValue) {
 
-getImages('nature'); 
+    const options = new URLSearchParams({
+        key: API_KEY,
+        q: inputValue,
+        image_type: "photo",
+        orientation: "horizontal",
+        safesearch: true,
+        per_page: 15
+    });
+
+    const urlWithParams = `${API_URL}?${options.toString()}`;
+
+    return fetch(urlWithParams)
+        .then(res => {
+            if (!res.ok) {
+                throw new Error("...UPS");
+            }
+            return res.json();
+        })
+        .then(data => {
+            console.log(data);
+
+            if (data.hits.length === 0) {
+                iziToast.error({
+                    title: 'Помилка',
+                    message: "Вибачте, не знайдено зображень за вашим запитом. Спробуйте ще раз!",
+                    position: 'topCenter',
+                    backgroundColor: '#ef4040',
+                });
+                return [];
+            }
+            return data.hits;
+        })
+        .catch(err => {
+            console.log(err);
+
+            iziToast.error({
+                title: 'Помилка',
+                message: 'Сталася помилка при отриманні даних. Спробуйте ще раз.',
+                position: 'topCenter',
+                backgroundColor: '#ef4040',
+            });
+        });
+}

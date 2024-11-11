@@ -1,36 +1,20 @@
-import iziToast from 'izitoast';
-import 'izitoast/dist/css/iziToast.min.css';
+const list = document.querySelector(".list");
 
-export const renderImages = (images) => {
-    const gallery = document.querySelector('.gallery');
-    gallery.innerHTML = ''; // Очищаємо галерею перед новим рендерингом
-
-    if (images.length === 0) {
-        showAlert('Sorry, there are no images matching your search query. Please try again!');
-        return;
-    }
-
-    const markup = images.map(image => `
-        <a href="${image.largeImageURL}">
-            <div class="gallery-item">
-                <img src="${image.webformatURL}" alt="${image.tags}" loading="lazy" />
-                <div class="info">
-                    <p>Likes: ${image.likes}</p>
-                    <p>Views: ${image.views}</p>
-                    <p>Comments: ${image.comments}</p>
-                    <p>Downloads: ${image.downloads}</p>
-                </div>
+export function formResults(images) {
+    const markup = images.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => `
+        <div class="gallery-item">
+            <a href="${largeImageURL}">
+                <img src="${webformatURL}" alt="${tags}" width="360" height="200"/>
+            </a>
+            <div class="info">
+                <p class="info-text"><b class="xz">Likes:</b> ${likes}</p>
+                <p class="info-text"><b class="xz">Views:</b> ${views}</p>
+                <p class="info-text"><b class="xz">Comments:</b> ${comments}</p>
+                <p class="info-text"><b class="xz">Downloads:</b> ${downloads}</p>
             </div>
-        </a>
-    `).join('');
+        </div>
+    `).join("");
 
-    gallery.insertAdjacentHTML('beforeend', markup);
-};
-
-export const showAlert = (message) => {
-    iziToast.error({
-        title: 'Error',
-        message: message,
-        position: 'topRight',
-    });
-};
+    list.innerHTML = "";
+    list.insertAdjacentHTML("beforeend", markup);
+}
